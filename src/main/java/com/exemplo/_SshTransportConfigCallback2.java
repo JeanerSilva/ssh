@@ -7,37 +7,34 @@ import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 
-public class _SshTransportConfigCallback2 implements TransportConfigCallback {
+class _SshTransportConfigCallback2 implements TransportConfigCallback {
 
-    public static final _SshTransportConfigCallback2 INSTANCE = new _SshTransportConfigCallback2();
-    private final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+    private final SshSessionFactory sshSessionFactory;
 
-        @Override
+    public _SshTransportConfigCallback2() {
+        sshSessionFactory = new JschConfigSessionFactory() {
 
-        protected void configure(OpenSshConfig.Host hc, Session session) {
-            session.setConfig("StrictHostKeyChecking", "no");
-        }
-
-        @Override
-
-        protected JSch createDefaultJSch(FS fs) throws JSchException {
-
-            try {
-                JSch defaultJSch = super.createDefaultJSch(fs);
-                defaultJSch.addIdentity("~/.ssh/id_rsa");
-                return defaultJSch;
-            } catch (Exception e) {
-                throw new JSchException(e.getMessage(), e);
+            @Override
+            protected JSch getJSch(OpenSshConfig.Host hc, FS fs) throws JSchException {
+                JSch jsch = super.getJSch(hc, fs);
+                System.out.println("hc " + hc);
+                jsch.removeAllIdentity();
+                System.out.println("hc " + hc);
+                jsch.addIdentity("~/.ssh/id_rsa");
+                return jsch;
             }
 
-        }
+            @Override
+            protected void configure(final OpenSshConfig.Host hc, final Session session) {
+                session.setConfig("StrictHostKeyChecking", "no");
+            }
+        };
+    }
 
-    };
-
-    public void configure(Transport transport) {
+    @Override
+    public void configure(final Transport transport) {
         SshTransport sshTransport = (SshTransport) transport;
         sshTransport.setSshSessionFactory(sshSessionFactory);
     }
-
 
 }
